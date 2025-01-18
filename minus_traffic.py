@@ -3,8 +3,14 @@ import pyshark
 import pytest
 import requests
 import yara
+import json
+from datetime import datetime
 
+#use your virustotal api key
 API_KEY = ""
+
+#output file for splunk ingestion
+OUTPUT_FILE = "ioc_results.json"
 
 #function to extract IPs and domains from pcap file
 def extracts_iocs_from_pcap(pcap_file):
@@ -45,10 +51,15 @@ def query_virustotal(ioc, ioc_type='ip'):
             result = response.json()
             # Check if the IOC is flagged
             stats = result['data']['attributes']['last_analysis_stats'] 
-            malicious = ['malicious'] 
+            malicious_count = stats.get('malicious',0)
             reputation = result['data']['attributes'].get('reputation', 'N/A')
-            print(f"[INFO] {ioc}: Malicious={malicious}, Reputation={reputation}")
-            return {'ioc': ioc, 'malicious': malicious, 'reputation': reputation}
+            return {
+                'ioc': ioc,
+                'type': ioc_type,
+                'malicious_count': malicious_count,
+                'reputation': reputation,
+                'timestamp': datetime.utcnow().isoformat()
+            }
         else:
             print(f"Error querying VirusTotal for {ioc}: {response.status_code}")
             return None
@@ -75,5 +86,51 @@ def scan_files_with_yara(rule_file, file_paths):
     
     return results
 
+# Function to create a dashboard using Matplotlib
+def create_dashboard(ioc_data):
+    malicious_counts = [ioc['malicious'] for ioc in ioc_data if ioc]
+    labels = [ioc['ioc'] for ioc in ioc_data if ioc]
+    
+    # Create a bar chart
+    plt.figure(figsize=(10, 6))
+    plt.bar(labels, malicious_counts, color='red')
+    plt.xlabel("IoCs (IPs/Domains)")
+    plt.ylabel("Malicious Count")
+    plt.title("Malicious IoCs Detected by VirusTotal")
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
 
 # Main function to analyze pcap file and cross-reference IoCs
+def analyze_and_visualize(pcap_file, yara_rule_file=None, file_paths=None):
+    # Extract IoCs from the pcap file
+    iocs = extracts_iocs_from_pcap(pcap_file)
+
+    # Query VirusTotal for IoCs and collect data
+    ioc_data = []
+    for ip in iocs['ips']:
+        print(f"Checking IP: {ip}")
+        result = query_virustotal(ip, ioc_type='ip')
+        if result:
+            ioc_data.append(result)
+
+    for domain in iocs['domains']:
+        print(f"Checking Domain: {domain}")
+        result = query_virustotal(domain, ioc_type='domain')
+        if result:
+            ioc_data.append(result)
+
+    # Optionally scan files with Yara
+    if yara_rule_file and file_paths:
+        scan_files_with_yara(yara_rule_file, file_paths)
+
+    # Generate a dashboard
+    create_dashboard(ioc_data)
+
+# Test case
+if __name__ == "__main__":
+    pcap_file = "path_to_your_pcap_file.pcap"  # Provide your pcap file path
+    yara_rule_file = "path_to_yara_rules.yar"  # Provide your Yara rules file path
+    file_paths = ["path_to_file1", "path_to_file2"]  # Provide file paths for Yara scanning
+    
+    analyze_and_visualize(pcap_file, yara_rule_file, file_paths)
