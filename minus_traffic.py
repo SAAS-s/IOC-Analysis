@@ -1,6 +1,7 @@
 #importing important libraries
 import pyshark
 import pytest
+import requests
 
 API_KEY = ""
 
@@ -54,3 +55,23 @@ def query_virustotal(ioc, ioc_type='ip'):
     except Exception as e:
         print(f"Error querying VirusTotal: {e}")
         return False
+
+# Main function to analyze pcap file and cross-reference IoCs
+def analyze_pcap_and_cross_reference(pcap_file):
+    # Extract IoCs from the pcap file
+    iocs = extracts_iocs_from_pcap(pcap_file)
+    
+    # Cross-reference IPs with VirusTotal
+    for ip in iocs['ips']:
+        print(f"Checking IP: {ip}")
+        query_virustotal(ip, ioc_type='ip')
+    
+    # Cross-reference domains with VirusTotal
+    for domain in iocs['domains']:
+        print(f"Checking Domain: {domain}")
+        query_virustotal(domain, ioc_type='domain')
+
+# test case
+if __name__ == "__main__":
+    pcap_file = "path_to_your_pcap_file.pcap"  # providing pcap file path
+    analyze_pcap_and_cross_reference(pcap_file)
