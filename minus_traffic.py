@@ -2,6 +2,7 @@
 import pyshark
 import pytest
 import requests
+import yara
 
 API_KEY = ""
 
@@ -43,18 +44,17 @@ def query_virustotal(ioc, ioc_type='ip'):
         if response.status_code == 200:
             result = response.json()
             # Check if the IOC is flagged
-            if result['data']['attributes']['last_analysis_stats']['malicious'] > 0:
-                print(f"[ALERT] {ioc} is malicious!")
-                return True
-            else:
-                print(f"{ioc} is clean.")
-                return False
+            stats = result['data']['attributes']['last_analysis_stats'] 
+            malicious = ['malicious'] 
+            reputation = result['data']['attributes'].get('reputation', 'N/A')
+            print(f"[INFO] {ioc}: Malicious={malicious}, Reputation={reputation}")
+            return {'ioc': ioc, 'malicious': malicious, 'reputation': reputation}
         else:
             print(f"Error querying VirusTotal for {ioc}: {response.status_code}")
-            return False
+            return None
     except Exception as e:
         print(f"Error querying VirusTotal: {e}")
-        return False
+        return None
 
 # Main function to analyze pcap file and cross-reference IoCs
 def analyze_pcap_and_cross_reference(pcap_file):
