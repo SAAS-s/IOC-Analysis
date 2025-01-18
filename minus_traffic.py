@@ -111,28 +111,32 @@ def create_dashboard(ioc_data):
     plt.show()
 
 # Main function to analyze pcap file and cross-reference IoCs
-def analyze_and_visualize(pcap_file, yara_rule_file=None, file_paths=None):
+def analyze_and_save(pcap_file, yara_rule_file=None, file_paths=None):
     # Extract IoCs from the pcap file
     iocs = extracts_iocs_from_pcap(pcap_file)
+    results = []
 
     # Query VirusTotal for IoCs and collect data
-    ioc_data = []
+   
     for ip in iocs['ips']:
         print(f"Checking IP: {ip}")
         result = query_virustotal(ip, ioc_type='ip')
         if result:
-            ioc_data.append(result)
+            results.append(result)
 
     for domain in iocs['domains']:
         print(f"Checking Domain: {domain}")
         result = query_virustotal(domain, ioc_type='domain')
         if result:
-            ioc_data.append(result)
+            results.append(result)
 
     # Optionally scan files with Yara
     if yara_rule_file and file_paths:
-        scan_files_with_yara(yara_rule_file, file_paths)
+        yara_results = scan_files_with_yara(yara_rule_file, file_paths)
+        results.extend({'file_scan': r} for r in yara_results)
 
+    save_results(results, OUTPUT_FILE)
+    
     # Generate a dashboard
     create_dashboard(ioc_data)
 
