@@ -86,6 +86,15 @@ def scan_files_with_yara(rule_file, file_paths):
     
     return results
 
+#function to save results in the json format for integration with splunk 
+def save_results(results, output_file):
+    try:
+        with open(output_file,"w") as json_file:
+            json.dump(results, json_file, indent=4)
+        print(f"[INFO] Results saved to {output_file}")
+    except Exception as e:
+        print(f"Error saving results: {e}")
+
 # Function to create a dashboard using Matplotlib
 def create_dashboard(ioc_data):
     malicious_counts = [ioc['malicious'] for ioc in ioc_data if ioc]
