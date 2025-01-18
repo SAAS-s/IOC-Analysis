@@ -1,6 +1,5 @@
 #importing important libraries
 import pyshark
-import pytest
 import requests
 import yara
 import json
@@ -96,19 +95,19 @@ def save_results(results, output_file):
         print(f"Error saving results: {e}")
 
 # Function to create a dashboard using Matplotlib
-def create_dashboard(ioc_data):
-    malicious_counts = [ioc['malicious'] for ioc in ioc_data if ioc]
-    labels = [ioc['ioc'] for ioc in ioc_data if ioc]
+    # eate_dashboard(ioc_data):
+    # malicious_counts = [ioc['malicious'] for ioc in ioc_data if ioc]
+    # labels = [ioc['ioc'] for ioc in ioc_data if ioc]
     
-    # Create a bar chart
-    plt.figure(figsize=(10, 6))
-    plt.bar(labels, malicious_counts, color='red')
-    plt.xlabel("IoCs (IPs/Domains)")
-    plt.ylabel("Malicious Count")
-    plt.title("Malicious IoCs Detected by VirusTotal")
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    plt.show()
+    # # Create a bar chart
+    # plt.figure(figsize=(10, 6))
+    # plt.bar(labels, malicious_counts, color='red')
+    # plt.xlabel("IoCs (IPs/Domains)")
+    # plt.ylabel("Malicious Count")
+    # plt.title("Malicious IoCs Detected by VirusTotal")
+    # plt.xticks(rotation=45, ha='right')
+    # plt.tight_layout()
+    # plt.show()
 
 # Main function to analyze pcap file and cross-reference IoCs
 def analyze_and_save(pcap_file, yara_rule_file=None, file_paths=None):
@@ -138,7 +137,7 @@ def analyze_and_save(pcap_file, yara_rule_file=None, file_paths=None):
     save_results(results, OUTPUT_FILE)
     
     # Generate a dashboard
-    create_dashboard(ioc_data)
+
 
 # Test case
 if __name__ == "__main__":
@@ -146,4 +145,4 @@ if __name__ == "__main__":
     yara_rule_file = "path_to_yara_rules.yar"  # Provide your Yara rules file path
     file_paths = ["path_to_file1", "path_to_file2"]  # Provide file paths for Yara scanning
     
-    analyze_and_visualize(pcap_file, yara_rule_file, file_paths)
+    analyze_and_save(pcap_file, yara_rule_file, file_paths)
