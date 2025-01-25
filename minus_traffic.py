@@ -3,6 +3,7 @@ import pyshark
 import requests
 import yara
 import json
+import csv
 from datetime import datetime
 
 #use your virustotal api key
@@ -94,6 +95,21 @@ def save_results(results, output_file):
     except Exception as e:
         print(f"Error saving results: {e}")
 
+# Generate a dashboard
+# Integrating it with tableau
+# changing the json results for tableau usage
+
+def save_results_csv(results, output_file):
+    try:
+        keys=results[0].keys()
+        with open(output_file, "w", newline='') as csv_file:
+            writer=csv.DictWriter(csv_file, fieldnames=keys)
+            writer.writeheader()
+            writer.writerows(results)
+        print(f"[INFO] Results saved to {output_file}")
+    except Exception as e: 
+        print(f"Error saving results: {e}")
+
 # Function to create a dashboard using Matplotlib
     # eate_dashboard(ioc_data):
     # malicious_counts = [ioc['malicious'] for ioc in ioc_data if ioc]
@@ -134,10 +150,8 @@ def analyze_and_save(pcap_file, yara_rule_file=None, file_paths=None):
         yara_results = scan_files_with_yara(yara_rule_file, file_paths)
         results.extend({'file_scan': r} for r in yara_results)
 
-    save_results(results, OUTPUT_FILE)
+    save_results(results, "ioc_results.csv")
     
-    # Generate a dashboard
-
 
 # Test case
 if __name__ == "__main__":
